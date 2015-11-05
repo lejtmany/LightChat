@@ -1,19 +1,18 @@
 import asyncio
+import sys
 
 class EchoClientProtocol(asyncio.Protocol):
-    def __init__(self, loop):
+    def __init__(self, loop, to):
         self.loop = loop
+        self.to = to
 
     def connection_made(self, transport):
-        # transport.write(self.message.encode())
-        # print('Data sent: {!r}'.format(self.message))
         print("Connection Made")
-        a = self.loop.ensure_future(listen_for_input())
-        self.loop.run_until_complete(a)
+        self.transport = transport
+        self.loop.add_reader(sys.stdin, self.write_to_server)
 
-    async def listen_for_input(self):
-        while True:
-            await input()
+    def write_to_server(self):
+        self.transport.write(sys.stdin.readline().encode())
 
     def data_received(self, data):
         print('Data received: {!r}'.format(data.decode()))
@@ -24,7 +23,7 @@ class EchoClientProtocol(asyncio.Protocol):
         self.loop.stop()
 
 loop = asyncio.get_event_loop()
-coro = loop.create_connection(lambda: EchoClientProtocol(loop),
+coro = loop.create_connection(lambda: EchoClientProtocol(loop, 'kdog'),
                               'localhost', 8888)
 loop.run_until_complete(coro)
 loop.run_forever()
