@@ -1,17 +1,26 @@
 import asyncio
+import json
+
 
 class EchoServerClientProtocol(asyncio.Protocol):
+    def __init__(self):
+        self.connections = {}
+
     def connection_made(self, transport):
         peername = transport.get_extra_info('peername')
         print('Connection from {}'.format(peername))
         self.transport = transport
 
     def data_received(self, data):
-        message = data.decode()
-        print('Data received: {!r}'.format(message))
-
-        print('Send: {!r}'.format(message))
-        self.transport.write(data + 'oh yeahhhhh'.encode())
+        tup = json.loads(data.decode())
+        print('Data received from {!r}: {!r}'.format(tup['to'], tup['message']))
+        to = tup['to']
+        message = tup['message']
+        if to == 'uname_setup':
+            self.connections[message] = self.transport
+        elif to in self.connections.keys():
+            self.connections[to].write('{} says: {}'.format(tup['uname'],tup['message']).encode())
+        print(self.connections)
 
 loop = asyncio.get_event_loop()
 # Each client connection will create a new protocol instance
