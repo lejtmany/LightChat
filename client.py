@@ -15,10 +15,13 @@ class EchoClientProtocol(asyncio.Protocol):
         self.transport.write(json.dumps({'from:':self.uname,'to':'uname_setup', 'message':self.uname}).encode())
 
     def write_to_server(self):
-        self.transport.write(json.dumps({'to':self.to, 'message':sys.stdin.readline()}).encode())
+        message = sys.stdin.readline()
+        print("\033[A                             \033[A")
+        print('me> {}'.format(message), end='')
+        self.transport.write(json.dumps({'to':self.to, 'message': message}).encode())
 
     def data_received(self, data):
-        print('Data received: {!r}'.format(data.decode()))
+        print('{}'.format(data.decode()))
 
     def connection_lost(self, exc):
         print('The server closed the connection')
@@ -26,10 +29,10 @@ class EchoClientProtocol(asyncio.Protocol):
         self.loop.stop()
 
 loop = asyncio.get_event_loop()
-coro = loop.create_connection(lambda: EchoClientProtocol(loop, 'lightdog','kdog'),
+uname = input('Enter user name:')
+recip = input('Enter recipient:')
+coro = loop.create_connection(lambda: EchoClientProtocol(loop, uname,recip),
                               'localhost', 8888)
-# coro = loop.create_connection(lambda: EchoClientProtocol(loop, 'kdog','lightdog'),
-#                               'localhost', 8888)
 loop.run_until_complete(coro)
 loop.run_forever()
 loop.close()
